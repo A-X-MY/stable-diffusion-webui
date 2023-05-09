@@ -294,13 +294,13 @@ def webui():
     while 1:
         if shared.opts.clean_temp_dir_at_start:
             ui_tempdir.cleanup_tmpdr()
-            startup_timer.record("cleanup temp dir")
+            startup_timer.record("清理临时目录")
 
         modules.script_callbacks.before_ui_callback()
-        startup_timer.record("scripts before_ui_callback")
+        startup_timer.record("执行UI初始化前脚本回调")
 
         shared.demo = modules.ui.create_ui()
-        startup_timer.record("create ui")
+        startup_timer.record("创建UI")
 
         if not cmd_opts.no_gradio_queue:
             shared.demo.queue(64)
@@ -328,7 +328,7 @@ def webui():
         # after initial launch, disable --autolaunch for subsequent restarts
         cmd_opts.autolaunch = False
 
-        startup_timer.record("gradio launch")
+        startup_timer.record("启动Gradio服务")
 
         # gradio uses a very open CORS policy via app.user_middleware, which makes it possible for
         # an attacker to trick the user into opening a malicious HTML page, which makes a request to the
@@ -346,12 +346,12 @@ def webui():
         ui_extra_networks.add_pages_to_demo(app)
 
         modules.script_callbacks.app_started_callback(shared.demo, app)
-        startup_timer.record("scripts app_started_callback")
+        startup_timer.record("执行UI初始化后脚本回调")
 
-        print(f"Startup time: {startup_timer.summary()}.")
+        print(f"启动时间: {startup_timer.summary()}.")
 
         wait_on_server(shared.demo)
-        print('Restarting UI...')
+        print('重新启动UI...')
 
         startup_timer.reset()
 
@@ -359,42 +359,42 @@ def webui():
 
         modules.script_callbacks.script_unloaded_callback()
         extensions.list_extensions()
-        startup_timer.record("list extensions")
+        startup_timer.record("列出安装的扩展")
 
         config_state_file = shared.opts.restore_config_state_file
         shared.opts.restore_config_state_file = ""
         shared.opts.save(shared.config_filename)
 
         if os.path.isfile(config_state_file):
-            print(f"*** About to restore extension state from file: {config_state_file}")
+            print(f"*** 准备恢复扩展状态: {config_state_file}")
             with open(config_state_file, "r", encoding="utf-8") as f:
                 config_state = json.load(f)
                 config_states.restore_extension_config(config_state)
-            startup_timer.record("restore extension config")
+            startup_timer.record("恢复扩展配置")
         elif config_state_file:
-            print(f"!!! Config state backup not found: {config_state_file}")
+            print(f"!!! 配置状态备份文件不存在: {config_state_file}")
 
         localization.list_localizations(cmd_opts.localizations_dir)
 
         modelloader.forbid_loaded_nonbuiltin_upscalers()
         modules.scripts.reload_scripts()
-        startup_timer.record("load scripts")
+        startup_timer.record("加载脚本")
 
         modules.script_callbacks.model_loaded_callback(shared.sd_model)
-        startup_timer.record("model loaded callback")
+        startup_timer.record("执行模型加载后脚本回调")
 
         modelloader.load_upscalers()
-        startup_timer.record("load upscalers")
+        startup_timer.record("加载超分辨率模型")
 
         for module in [module for name, module in sys.modules.items() if name.startswith("modules.ui")]:
             importlib.reload(module)
-        startup_timer.record("reload script modules")
+        startup_timer.record("重新加载脚本模块")
 
         modules.sd_models.list_models()
-        startup_timer.record("list SD models")
+        startup_timer.record("列出可用的SD模型")
 
         shared.reload_hypernetworks()
-        startup_timer.record("reload hypernetworks")
+        startup_timer.record("列出可用的SD模型")
 
         ui_extra_networks.intialize()
         ui_extra_networks.register_page(ui_extra_networks_textual_inversion.ExtraNetworksPageTextualInversion())
@@ -403,7 +403,7 @@ def webui():
 
         extra_networks.initialize()
         extra_networks.register_extra_network(extra_networks_hypernet.ExtraNetworkHypernet())
-        startup_timer.record("initialize extra networks")
+        startup_timer.record("初始化额外网络")
 
 
 if __name__ == "__main__":
